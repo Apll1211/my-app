@@ -19,13 +19,18 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 22
+          node-version: 20
           cache: "pnpm"
+
+      - name: Install build tools for native modules
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y python3 make g++
 
       - name: Build Project
         run: |
           echo "Starting install..."
-          pnpm install --no-frozen-lockfile
+          pnpm install --frozen-lockfile
           echo "Dependencies installed."
           echo "Starting build..."
           pnpm build
@@ -40,7 +45,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: ${{ secrets.REMOTE_PORT }}
           target: "/home/apll1211/my-app"
-          source: ".next/,public/,package.json,next.config.js,pnpm-lock.yaml"
+          source: ".next/,public/,package.json,next.config.ts,pnpm-lock.yaml"
 
       - name: Restart App
         uses: appleboy/ssh-action@v1.0.3
