@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import "./globals.css";
 import Providers from "@/components/Providers";
 import SplashCursor from "@/components/SplashCursor";
+import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/context/AuthContext";
 import { SplashCursorProvider } from "@/context/SplashCursorContext";
-import { Toaster } from "@/components/ui/sonner";
 
 export const metadata: Metadata = {
   title: "GenVio",
@@ -31,7 +31,13 @@ export default function RootLayout({
           `}
         </style>
       </head>
-      <body className="font-sans antialiased" style={{ fontFamily: '"dingtalk-jinbuti", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif' }}>
+      <body
+        className="font-sans antialiased"
+        style={{
+          fontFamily:
+            '"dingtalk-jinbuti", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+        }}
+      >
         <SplashCursorProvider>
           <SplashCursor />
           <Providers>
