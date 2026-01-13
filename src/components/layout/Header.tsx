@@ -1,17 +1,21 @@
 "use client";
 
-import { motion, AnimatePresence } from "framer-motion";
-import { Search, Sparkles, Sun, Moon, Menu, X, Settings, Home, Compass, Heart, Users } from "lucide-react";
+import { AnimatePresence, motion } from "framer-motion";
+import {
+  Compass,
+  Heart,
+  Home,
+  Menu,
+  Moon,
+  Search,
+  Sparkles,
+  Sun,
+  Users,
+} from "lucide-react";
+import { usePathname, useRouter } from "next/navigation";
+import { useCallback, useEffect, useState } from "react";
 import MetallicPaint, { parseLogoImage } from "@/components/MetallicPaint";
 import ShinyText from "@/components/ShinyText";
-import { useRouter, usePathname } from "next/navigation";
-import { useState, useEffect, useCallback } from "react";
-import {
-  buttonVariants,
-  transitions,
-} from "@/lib/animations";
-import { useSplashCursor } from "@/context/SplashCursorContext";
-import { useTheme } from "@/context/ThemeContext";
 import {
   Sheet,
   SheetContent,
@@ -19,6 +23,9 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { useSplashCursor } from "@/context/SplashCursorContext";
+import { useTheme } from "@/context/ThemeContext";
+import { buttonVariants, transitions } from "@/lib/animations";
 
 // Mobile Menu Button Component - Uses existing MobileMenuSheet
 function MobileMenuButton() {
@@ -93,7 +100,6 @@ function MobileMenuSheetContent() {
     Sparkles,
     Heart,
     Users,
-    Settings,
   };
 
   return (
@@ -111,24 +117,15 @@ function MobileMenuSheetContent() {
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               maxLength={100}
-              className="h-9 w-full rounded-lg bg-muted pl-9 pr-8 text-sm outline-none border border-transparent focus:ring-2 focus:ring-primary/50 focus:border-primary placeholder:text-muted-foreground/60"
+              className="h-9 w-full rounded-lg bg-muted pl-9 pr-3 text-sm outline-none border border-transparent focus:ring-2 focus:ring-primary/50 focus:border-primary placeholder:text-muted-foreground/60"
             />
-            {searchQuery && (
-              <button
-                type="button"
-                onClick={() => setSearchQuery("")}
-                className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center justify-center w-5 h-5 rounded-full bg-muted-foreground/20 text-muted-foreground hover:bg-muted-foreground/30 active:bg-muted-foreground/50"
-                aria-label="清空搜索"
-              >
-                <span className="text-[10px] font-bold">×</span>
-              </button>
-            )}
           </div>
           <button
             type="submit"
-            className="px-3 h-9 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 active:scale-95 transition-transform text-sm font-medium"
+            className="px-2 h-9 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 active:scale-95 transition-transform flex items-center justify-center"
+            aria-label="搜索"
           >
-            搜索
+            <Search className="h-4 w-4" />
           </button>
         </form>
       </div>
@@ -147,7 +144,10 @@ function MobileMenuSheetContent() {
             sidebarItems.map((item) => {
               if (item.item_type === "divider") {
                 return (
-                  <div key={item.id} className="my-2 h-px w-full bg-border opacity-60" />
+                  <div
+                    key={item.id}
+                    className="my-2 h-px w-full bg-border opacity-60"
+                  />
                 );
               }
 
@@ -181,7 +181,7 @@ function MobileMenuSheetContent() {
         {/* Quick Actions */}
         <div className="border-t border-border p-3">
           <div className="text-xs font-medium text-muted-foreground mb-2 px-1">
-            快捷设置
+            页面设置
           </div>
           <div className="flex flex-col gap-1">
             <button
@@ -204,15 +204,6 @@ function MobileMenuSheetContent() {
                   }`}
                 />
               </div>
-            </button>
-
-            <button
-              type="button"
-              onClick={() => handleNavigation("/admin")}
-              className="flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground active:bg-accent/50 border border-border/50 mt-2"
-            >
-              <Settings className="h-4 w-4" />
-              <span>后台管理</span>
             </button>
           </div>
         </div>
@@ -246,23 +237,29 @@ export default function Header() {
   }, []);
 
   // 处理搜索输入变化
-  const handleSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    // 限制输入长度为 100 个字符
-    if (value.length <= 100) {
-      setSearchQuery(value);
-    }
-  }, []);
+  const handleSearchChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      const value = e.target.value;
+      // 限制输入长度为 100 个字符
+      if (value.length <= 100) {
+        setSearchQuery(value);
+      }
+    },
+    [],
+  );
 
   // 处理搜索提交
-  const handleSearchSubmit = useCallback((e: React.FormEvent) => {
-    e.preventDefault();
-    const trimmedQuery = searchQuery.trim();
-    if (trimmedQuery) {
-      // 跳转到搜索页面
-      router.push(`/search?q=${encodeURIComponent(trimmedQuery)}`);
-    }
-  }, [searchQuery, router]);
+  const handleSearchSubmit = useCallback(
+    (e: React.FormEvent) => {
+      e.preventDefault();
+      const trimmedQuery = searchQuery.trim();
+      if (trimmedQuery) {
+        // 跳转到搜索页面
+        router.push(`/search?q=${encodeURIComponent(trimmedQuery)}`);
+      }
+    },
+    [searchQuery, router],
+  );
 
   return (
     <header className="fixed left-0 right-0 top-0 z-50 h-16 bg-background/70 backdrop-blur-xl border-b border-border">
@@ -328,19 +325,27 @@ export default function Header() {
           >
             <motion.div
               className="absolute left-3 top-1/2 -translate-y-1/2"
-              animate={searchQuery ? {
-                color: "var(--primary)",
-              } : {
-                color: "var(--muted-foreground)",
-              }}
+              animate={
+                searchQuery
+                  ? {
+                      color: "#3b82f6",
+                    }
+                  : {
+                      color: "#6b7280",
+                    }
+              }
               transition={transitions.smooth}
             >
               <motion.div
-                animate={searchQuery ? {
-                  rotate: [0, 360],
-                } : {
-                  rotate: 0,
-                }}
+                animate={
+                  searchQuery
+                    ? {
+                        rotate: [0, 360],
+                      }
+                    : {
+                        rotate: 0,
+                      }
+                }
                 transition={{
                   duration: 0.5,
                   ease: "easeInOut",
@@ -408,7 +413,11 @@ export default function Header() {
             whileTap={{ scale: 0.95 }}
             transition={transitions.smooth}
             aria-label="切换主题"
-            title={mode === "auto" ? "当前为自动模式，点击切换为手动控制" : "手动控制主题，点击切换回自动模式"}
+            title={
+              mode === "auto"
+                ? "当前为自动模式，点击切换为手动控制"
+                : "手动控制主题，点击切换回自动模式"
+            }
           >
             <motion.div
               className="relative w-4 h-4"
@@ -438,7 +447,7 @@ export default function Header() {
             <motion.div
               className="relative h-5 w-9 rounded-full transition-colors"
               animate={{
-                backgroundColor: isEnabled ? "var(--primary)" : "var(--muted)",
+                backgroundColor: isEnabled ? "#3b82f6" : "#e5e7eb",
               }}
               transition={transitions.smooth}
             >

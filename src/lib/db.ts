@@ -14,7 +14,7 @@ function initDatabase(): Database.Database {
   try {
     // 数据库文件路径
     const dbDir = path.join(process.cwd(), "data");
-    const dbPath = path.join(dbDir, "douyin.db");
+    const dbPath = path.join(dbDir, "genvio.db");
 
     // 确保数据目录存在
     if (!fs.existsSync(dbDir)) {
@@ -303,6 +303,18 @@ function initDatabase(): Database.Database {
       });
       console.log("Initialized default sidebar items");
     }
+
+    // 操作记录表（用于备份和恢复）
+    _db.exec(`
+      CREATE TABLE IF NOT EXISTS recent_operations (
+        id TEXT PRIMARY KEY,
+        table_name TEXT NOT NULL,
+        operation_type TEXT NOT NULL,
+        record_id TEXT,
+        old_data TEXT,
+        created_at TEXT NOT NULL
+      )
+    `);
 
     // 移除后台管理菜单相关代码（博客不需要）
 

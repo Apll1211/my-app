@@ -1,4 +1,4 @@
-import { db, getCurrentTime } from "./db";
+import { db, getCurrentTime, generateId } from "./db";
 
 /**
  * 记录操作前的数据（自动备份）
@@ -24,9 +24,10 @@ export function recordOperation(
 
     // 插入操作记录
     db.prepare(`
-      INSERT INTO recent_operations (table_name, operation_type, record_id, old_data, created_at)
-      VALUES (?, ?, ?, ?, ?)
+      INSERT INTO recent_operations (id, table_name, operation_type, record_id, old_data, created_at)
+      VALUES (?, ?, ?, ?, ?, ?)
     `).run(
+      generateId(),
       tableName,
       operationType,
       recordId || null,
@@ -36,7 +37,7 @@ export function recordOperation(
 
     // 清理超过24小时的旧记录
     db.prepare(`
-      DELETE FROM recent_operations 
+      DELETE FROM recent_operations
       WHERE created_at < datetime('now', '-24 hours')
     `).run();
 
