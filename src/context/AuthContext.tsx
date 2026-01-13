@@ -49,7 +49,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       try {
         setUser(JSON.parse(storedUser));
       } catch (error) {
-        console.error("Failed to parse stored user:", error);
+        // 用户数据解析失败，保持未登录状态
       }
     }
   }, []);

@@ -41,8 +41,7 @@ export function recordOperation(
       WHERE created_at < datetime('now', '-24 hours')
     `).run();
 
-    console.log(`Recorded operation: ${operationType} on ${tableName}`);
   } catch (error) {
-    console.error("Failed to record operation:", error);
+    // 记录操作失败，静默处理
   }
 }

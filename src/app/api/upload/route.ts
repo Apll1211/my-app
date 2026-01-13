@@ -66,7 +66,6 @@ export async function POST(request: NextRequest) {
       fileSize: file.size,
     });
   } catch (error) {
-    console.error("文件上传失败:", error);
     return NextResponse.json(
       { success: false, error: "文件上传失败" },
       { status: 500 }

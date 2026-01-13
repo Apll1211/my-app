@@ -110,7 +110,6 @@ function SearchContent() {
           typeof searchQuery !== "string" ||
           searchQuery.trim().length === 0
         ) {
-          console.warn("Invalid search query");
           return null;
         }
 
@@ -119,7 +118,6 @@ function SearchContent() {
         );
 
         if (!response.ok) {
-          console.error("Search API response not OK:", response.status);
           return null;
         }
 
@@ -127,24 +125,17 @@ function SearchContent() {
 
         // 验证响应数据
         if (!validateApiResponse(data)) {
-          console.error("Invalid search API response structure:", data);
           return null;
         }
 
         // 验证每个视频数据
         const validVideos = data.videos.filter(validateVideoData);
-        if (validVideos.length !== data.videos.length) {
-          console.warn(
-            `Filtered ${data.videos.length - validVideos.length} invalid videos from search results`,
-          );
-        }
 
         return {
           ...data,
           videos: validVideos,
         };
       } catch (error) {
-        console.error("Failed to search videos:", error);
         return null;
       }
     },

@@ -106,7 +106,7 @@ export default function LoginForm({
       onClose();
       form.reset();
     } catch (error) {
-      console.error("Login failed:", error);
+      // Login failed, error handled by parent component
     } finally {
       setIsLoading(false);
     }
@@ -120,7 +120,7 @@ export default function LoginForm({
       onClose();
       form.reset();
     } catch (error) {
-      console.error("Register failed:", error);
+      // Register failed, error handled by parent component
     } finally {
       setIsLoading(false);
     }
@@ -138,7 +138,7 @@ export default function LoginForm({
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{isLogin ? "登录 GenVio" : "注册 GenVio"}</DialogTitle>
+          <DialogTitle>{isLogin ? "登录 ApllGeo" : "注册 ApllGeo"}</DialogTitle>
           <DialogDescription>
             {isLogin ? "登录后体验更多精彩内容" : "创建账号，开启精彩之旅"}
           </DialogDescription>

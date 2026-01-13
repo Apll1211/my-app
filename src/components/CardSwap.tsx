@@ -61,13 +61,6 @@ const makeSlot = (
 });
 
 const placeNow = (el: HTMLElement, slot: Slot, skew: number) => {
-  console.log("[CardSwap] placeNow called:", {
-    slot,
-    skew,
-    element: el.tagName,
-    elementId: el.id,
-  });
-
   gsap.set(el, {
     x: slot.x,
     y: slot.y,
@@ -80,13 +73,6 @@ const placeNow = (el: HTMLElement, slot: Slot, skew: number) => {
     force3D: true,
     opacity: 1, // 设置透明度为 1，让卡片可见
   });
-
-  // 验证设置是否生效
-  const computedStyle = window.getComputedStyle(el);
-  console.log(
-    "[CardSwap] After placeNow, computed transform:",
-    computedStyle.transform,
-  );
 };
 
 const CardSwap: React.FC<CardSwapProps> = ({
@@ -128,7 +114,6 @@ const CardSwap: React.FC<CardSwapProps> = ({
   // 使用 useMemo 创建 refs，确保在渲染前就准备好
   // 这样 rendered 函数在首次渲染时就能访问到正确的 refs
   const refs = useMemo(() => {
-    console.log("[CardSwap] Creating refs for", childArr.length, "children");
     return Array(childArr.length)
       .fill(null)
       .map(() => React.createRef<HTMLDivElement>());
@@ -141,16 +126,8 @@ const CardSwap: React.FC<CardSwapProps> = ({
   const container = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    console.log("[CardSwap] Effect triggered:", {
-      childCount: childArr.length,
-      cardDistance,
-      verticalDistance,
-      delay,
-    });
-
     // 初始化 order
     if (!initialized.current) {
-      console.log("[CardSwap] Initializing order");
       order.current = Array.from({ length: childArr.length }, (_, i) => i);
       initialized.current = true;
     }
@@ -159,7 +136,6 @@ const CardSwap: React.FC<CardSwapProps> = ({
 
     // 定义 swap 函数，确保在所有作用域中都可访问
     const swap = () => {
-      console.log("[CardSwap] Swap triggered, order:", order.current);
       if (order.current.length < 2) return;
 
       const [front, ...rest] = order.current;
@@ -224,14 +200,12 @@ const CardSwap: React.FC<CardSwapProps> = ({
       );
 
       tl.call(() => {
-        console.log("[CardSwap] Swap complete, new order:", [...rest, front]);
         order.current = [...rest, front];
       });
     };
 
     // 定义放置卡片并启动动画的函数
     const placeCardsAndStartAnimation = () => {
-      console.log("[CardSwap] Placing cards");
       refs.forEach((r, i) => {
         if (r.current) {
           placeNow(
@@ -242,24 +216,19 @@ const CardSwap: React.FC<CardSwapProps> = ({
         }
       });
 
-      console.log("[CardSwap] Starting first swap");
       swap();
       intervalRef.current = window.setInterval(() => {
-        console.log("[CardSwap] Interval swap triggered");
         swap();
       }, delay);
 
       if (pauseOnHover) {
         const node = container.current;
         if (node) {
-          console.log("[CardSwap] Setting up hover events");
           const pause = () => {
-            console.log("[CardSwap] Paused on hover");
             tlRef.current?.pause();
             clearInterval(intervalRef.current);
           };
           const resume = () => {
-            console.log("[CardSwap] Resumed on leave");
             tlRef.current?.play();
             intervalRef.current = window.setInterval(swap, delay);
           };
@@ -272,17 +241,13 @@ const CardSwap: React.FC<CardSwapProps> = ({
     // 等待 DOM 渲染完成后再执行 GSAP 动画
     // 增加延迟时间并使用 requestAnimationFrame 确保 DOM 完全渲染
     const timeoutId = setTimeout(() => {
-      console.log("[CardSwap] DOM ready, placing cards");
-
       // 使用 requestAnimationFrame 确保 DOM 完全渲染
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
           // 检查所有 refs 是否都已绑定
           const allRefsReady = refs.every((r) => r.current !== null);
-          console.log("[CardSwap] All refs ready:", allRefsReady);
 
           if (!allRefsReady) {
-            console.warn("[CardSwap] Some refs are not ready, retrying...");
             // 如果 refs 没有准备好，再等待一段时间
             setTimeout(() => {
               placeCardsAndStartAnimation();
@@ -296,7 +261,6 @@ const CardSwap: React.FC<CardSwapProps> = ({
     }, 200);
 
     return () => {
-      console.log("[CardSwap] Cleanup");
       clearTimeout(timeoutId);
       clearInterval(intervalRef.current);
       if (pauseOnHover && container.current) {

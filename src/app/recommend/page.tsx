@@ -32,7 +32,6 @@ export default function RecommendPage() {
 
       return data;
     } catch (error) {
-      console.error("Failed to fetch videos:", error);
       return null;
     }
   }, []);

@@ -72,7 +72,6 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("Failed to search articles:", error);
     return NextResponse.json(
       { error: "搜索失败", details: String(error) },
       { status: 500 },

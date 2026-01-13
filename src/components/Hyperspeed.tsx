@@ -1001,7 +1001,6 @@ class App {
   animationFrameId: number | null = null;
 
   constructor(container: HTMLElement, options: HyperspeedOptions) {
-    console.log("App: Constructor called", { container, options });
     this.options = options;
     if (!this.options.distortion) {
       this.options.distortion = {
@@ -1014,10 +1013,6 @@ class App {
     // 获取容器的实际尺寸
     const containerWidth = container.clientWidth || window.innerWidth;
     const containerHeight = container.clientHeight || window.innerHeight;
-    console.log("App: Container dimensions", {
-      width: containerWidth,
-      height: containerHeight,
-    });
 
     this.renderer = new THREE.WebGLRenderer({
       antialias: false,
@@ -1025,11 +1020,9 @@ class App {
     });
     this.renderer.setSize(containerWidth, containerHeight, false);
     this.renderer.setPixelRatio(window.devicePixelRatio);
-    console.log("App: Renderer created");
 
     this.composer = new EffectComposer(this.renderer);
     container.appendChild(this.renderer.domElement);
-    console.log("App: Canvas appended to container");
 
     this.camera = new THREE.PerspectiveCamera(
       options.fov,
@@ -1040,11 +1033,9 @@ class App {
     this.camera.position.z = -5;
     this.camera.position.y = 8;
     this.camera.position.x = 0;
-    console.log("App: Camera created");
 
     this.scene = new THREE.Scene();
     this.scene.background = null;
-    console.log("App: Scene created");
 
     const fog = new THREE.Fog(
       options.colors.background,
@@ -1079,7 +1070,6 @@ class App {
       new THREE.Vector2(1, 0 + options.carLightsFade),
     );
     this.leftSticks = new LightsSticks(this, options);
-    console.log("App: Objects created");
 
     this.fovTarget = options.fov;
     this.speedUpTarget = 0;
@@ -1097,7 +1087,6 @@ class App {
     this.onContextMenu = this.onContextMenu.bind(this);
 
     window.addEventListener("resize", this.onWindowResize.bind(this));
-    console.log("App: Constructor completed");
   }
 
   onWindowResize() {
@@ -1164,26 +1153,21 @@ class App {
   }
 
   init() {
-    console.log("App: init() called");
     this.initPasses();
     const options = this.options;
 
-    console.log("App: Initializing road");
     this.road.init();
 
-    console.log("App: Initializing left car lights");
     this.leftCarLights.init();
     this.leftCarLights.mesh.position.setX(
       -options.roadWidth / 2 - options.islandWidth / 2,
     );
 
-    console.log("App: Initializing right car lights");
     this.rightCarLights.init();
     this.rightCarLights.mesh.position.setX(
       options.roadWidth / 2 + options.islandWidth / 2,
     );
 
-    console.log("App: Initializing left sticks");
     this.leftSticks.init();
     this.leftSticks.mesh.position.setX(
       -(options.roadWidth + options.islandWidth / 2),
@@ -1204,7 +1188,6 @@ class App {
     });
     this.container.addEventListener("contextmenu", this.onContextMenu);
 
-    console.log("App: Starting tick loop");
     this.tick();
   }
 
@@ -1350,17 +1333,8 @@ const Hyperspeed: FC<HyperspeedProps> = ({ effectOptions = {} }) => {
     const container = hyperspeed.current;
     if (!container) return;
 
-    console.log("Hyperspeed: useEffect triggered");
-    console.log("Hyperspeed: Current effectOptions", effectOptions);
-    console.log("Hyperspeed: Previous effectOptions", prevOptionsRef.current);
-    console.log(
-      "Hyperspeed: effectOptions reference changed?",
-      effectOptions !== prevOptionsRef.current,
-    );
-
     // 清理旧的 canvas
     if (appRef.current) {
-      console.log("Hyperspeed: Disposing old app");
       appRef.current.dispose();
       appRef.current = null;
       while (container.firstChild) {
@@ -1369,30 +1343,25 @@ const Hyperspeed: FC<HyperspeedProps> = ({ effectOptions = {} }) => {
     }
 
     const options = { ...defaultOptions, ...effectOptions };
-    console.log("Hyperspeed: Merged options", options);
 
     if (typeof options.distortion === "string") {
       options.distortion = distortions[options.distortion];
-      console.log("Hyperspeed: Applied distortion", options.distortion);
     }
 
     const myApp = new App(container, options);
     appRef.current = myApp;
     prevOptionsRef.current = effectOptions;
 
-    console.log("Hyperspeed: Loading assets...");
     myApp
       .loadAssets()
       .then(() => {
-        console.log("Hyperspeed: Assets loaded, initializing...");
         myApp.init();
       })
       .catch((error) => {
-        console.error("Hyperspeed: Error loading assets", error);
+        // 静默处理错误
       });
 
     return () => {
-      console.log("Hyperspeed: Cleanup");
       if (appRef.current) {
         appRef.current.dispose();
         appRef.current = null;

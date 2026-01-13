@@ -342,7 +342,7 @@ void main() {
           renderer.render({ scene: mesh });
           animationIdRef.current = requestAnimationFrame(loop);
         } catch (error) {
-          console.warn("WebGL rendering error:", error);
+          // WebGL 渲染错误，静默处理
           return;
         }
       };
@@ -368,11 +368,11 @@ void main() {
               loseContextExt.loseContext();
             }
 
-            if (canvas && canvas.parentNode) {
+            if (canvas?.parentNode) {
               canvas.parentNode.removeChild(canvas);
             }
           } catch (error) {
-            console.warn("Error during WebGL cleanup:", error);
+            // WebGL 清理错误，静默处理
           }
         }
 
@@ -461,7 +461,7 @@ void main() {
   return (
     <div
       ref={containerRef}
-      className={`w-full h-full pointer-events-none z-[3] overflow-hidden relative ${className}`.trim()}
+      className={`w-full h-full pointer-events-none z-3 overflow-hidden relative ${className}`.trim()}
     />
   );
 };

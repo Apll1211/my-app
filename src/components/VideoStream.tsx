@@ -97,7 +97,6 @@ export default function VideoStream({ videos, onLoadMore, hasMore }: VideoStream
   };
 
   const handleAction = (action: string, video: Video) => {
-    console.log(`${action} clicked for video:`, video.title);
     // 这里可以添加实际的点赞、评论、分享逻辑
   };
 

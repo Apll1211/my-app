@@ -1,4 +1,4 @@
-import { motion, useMotionValue, useTransform } from "motion/react";
+import { motion, useMotionValue, useAnimationFrame, useTransform } from "motion/react";
 import type React from "react";
 import { useCallback, useEffect, useRef, useState } from "react";
 
@@ -21,7 +21,7 @@ const ShinyText: React.FC<ShinyTextProps> = ({
   disabled = false,
   speed = 2,
   className = "",
-  color = "#b5b5b5",
+  color = "#6b7280", // Changed from #b5b5b5 to darker gray for better visibility
   shineColor = "#ffffff",
   spread = 120,
   yoyo = false,
@@ -34,21 +34,18 @@ const ShinyText: React.FC<ShinyTextProps> = ({
   const elapsedRef = useRef(0);
   const lastTimeRef = useRef<number | null>(null);
   const directionRef = useRef(direction === "left" ? 1 : -1);
-  const rafRef = useRef<number | null>(null);
 
   const animationDuration = speed * 1000;
   const delayDuration = delay * 1000;
 
-  const animate = useCallback((time: number) => {
+  useAnimationFrame(time => {
     if (disabled || isPaused) {
       lastTimeRef.current = null;
-      rafRef.current = requestAnimationFrame(animate);
       return;
     }
 
     if (lastTimeRef.current === null) {
       lastTimeRef.current = time;
-      rafRef.current = requestAnimationFrame(animate);
       return;
     }
 
@@ -92,20 +89,7 @@ const ShinyText: React.FC<ShinyTextProps> = ({
         progress.set(directionRef.current === 1 ? 100 : 0);
       }
     }
-
-    rafRef.current = requestAnimationFrame(animate);
-  }, [disabled, isPaused, yoyo, animationDuration, delayDuration, progress]);
-
-  useEffect(() => {
-    if (!disabled) {
-      rafRef.current = requestAnimationFrame(animate);
-    }
-    return () => {
-      if (rafRef.current) {
-        cancelAnimationFrame(rafRef.current);
-      }
-    };
-  }, [disabled, animate]);
+  });
 
   useEffect(() => {
     directionRef.current = direction === "left" ? 1 : -1;
@@ -114,10 +98,7 @@ const ShinyText: React.FC<ShinyTextProps> = ({
   }, [direction, progress]);
 
   // Transform: p=0 -> 150% (shine off right), p=100 -> -50% (shine off left)
-  const backgroundPositionX = useTransform(
-    progress,
-    (p) => `${150 - p * 2}% center`
-  );
+  const backgroundPosition = useTransform(progress, p => `${150 - p * 2}% center`);
 
   const handleMouseEnter = useCallback(() => {
     if (pauseOnHover) setIsPaused(true);
@@ -129,19 +110,16 @@ const ShinyText: React.FC<ShinyTextProps> = ({
 
   const gradientStyle: React.CSSProperties = {
     backgroundImage: `linear-gradient(${spread}deg, ${color} 0%, ${color} 35%, ${shineColor} 50%, ${color} 65%, ${color} 100%)`,
-    backgroundSize: "200% auto",
-    WebkitBackgroundClip: "text",
-    backgroundClip: "text",
-    WebkitTextFillColor: "transparent",
+    backgroundSize: '200% auto',
+    WebkitBackgroundClip: 'text',
+    backgroundClip: 'text',
+    WebkitTextFillColor: 'transparent'
   };
 
   return (
     <motion.span
       className={`inline-block ${className}`}
-      style={{
-        ...gradientStyle,
-        backgroundPosition: backgroundPositionX,
-      }}
+      style={{ ...gradientStyle, backgroundPosition }}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >

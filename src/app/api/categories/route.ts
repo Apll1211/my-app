@@ -6,9 +6,8 @@ export async function GET() {
   try {
     const categories = db
       .prepare(`
-        SELECT id, label, sort_order, active
+        SELECT id, name, slug, description, sort_order
         FROM categories
-        WHERE active = 1
         ORDER BY sort_order ASC
       `)
       .all();
@@ -18,7 +17,6 @@ export async function GET() {
       data: categories,
     });
   } catch (error) {
-    console.error("Error fetching categories:", error);
     return NextResponse.json(
       {
         success: false,

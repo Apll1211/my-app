@@ -26,7 +26,7 @@ export function SplashCursorProvider({ children }: { children: ReactNode }) {
       const saved = localStorage.getItem("splashCursorEnabled");
       return saved === null ? true : saved === "true";
     } catch (error) {
-      console.error("Failed to read from localStorage:", error);
+      // localStorage 读取失败，使用默认值
       return true;
     }
   }, []);
@@ -54,7 +54,7 @@ export function SplashCursorProvider({ children }: { children: ReactNode }) {
       try {
         localStorage.setItem("splashCursorEnabled", String(newValue));
       } catch (error) {
-        console.error("Failed to save to localStorage:", error);
+        // localStorage 保存失败，静默处理
       }
       return newValue;
     });

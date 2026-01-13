@@ -2,15 +2,15 @@
 
 import { AnimatePresence, motion } from "framer-motion";
 import {
-  Compass,
-  Heart,
+  Archive,
   Home,
+  Info,
   Menu,
   Moon,
   Search,
   Sparkles,
   Sun,
-  Users,
+  Tag,
 } from "lucide-react";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useState } from "react";
@@ -27,7 +27,34 @@ import { useSplashCursor } from "@/context/SplashCursorContext";
 import { useTheme } from "@/context/ThemeContext";
 import { buttonVariants, transitions } from "@/lib/animations";
 
-// Mobile Menu Button Component - Uses existing MobileMenuSheet
+// Unified Navigation Data Source
+interface NavigationItem {
+  id: string;
+  name: string;
+  icon: string;
+  path: string;
+  type: "static" | "category";
+  slug?: string;
+}
+
+const STATIC_NAVIGATION: NavigationItem[] = [
+  { id: "home", name: "首页", icon: "Home", path: "/", type: "static" },
+  { id: "search", name: "搜索", icon: "Search", path: "/search", type: "static" },
+  { id: "archive", name: "归档", icon: "Archive", path: "/archive", type: "static" },
+  { id: "tags", name: "标签", icon: "Tag", path: "/tags", type: "static" },
+  { id: "about", name: "关于", icon: "Info", path: "/about", type: "static" },
+];
+
+// Icon mapping
+const ICON_MAP: Record<string, any> = {
+  Home,
+  Search,
+  Archive,
+  Tag,
+  Info,
+};
+
+// Mobile Menu Button Component - Uses unified navigation data
 function MobileMenuButton() {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -36,13 +63,16 @@ function MobileMenuButton() {
       <SheetTrigger asChild>
         <button
           type="button"
-          className="md:hidden flex items-center gap-2 px-2 py-1.5 rounded-lg bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground active:scale-95 transition-transform active:bg-accent/50"
+          className="md:hidden flex items-center gap-2 px-2 py-1.5 rounded-lg bg-background/60 backdrop-blur-xl border border-border/20 text-muted-foreground hover:bg-background/70 hover:text-accent-foreground active:scale-95 transition-transform active:bg-background/60"
           aria-label="打开菜单"
         >
           <Menu className="h-4 w-4" />
         </button>
       </SheetTrigger>
-      <SheetContent side="left" className="w-[85vw] max-w-sm p-0 sm:w-80">
+      <SheetContent
+        side="left"
+        className="w-[85vw] max-w-sm p-0 sm:w-80 bg-background/95 backdrop-blur-xl"
+      >
         <SheetTitle className="sr-only">导航菜单</SheetTitle>
         {/* Use existing MobileMenuSheet component */}
         <MobileMenuSheetContent />
@@ -51,40 +81,47 @@ function MobileMenuButton() {
   );
 }
 
-// MobileMenuSheetContent - Simplified for performance
+// MobileMenuSheetContent - Blog Navigation Menu
 function MobileMenuSheetContent() {
   const router = useRouter();
-  const pathname = usePathname();
   const { isEnabled, toggleEnabled } = useSplashCursor();
-  const [sidebarItems, setSidebarItems] = useState<any[]>([]);
-  const [loading, setLoading] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [categories, setCategories] = useState<
+    Array<{ id: string; name: string; slug: string }>
+  >([]);
+  const [loading, setLoading] = useState(true);
+  const [allNavigation, setAllNavigation] = useState<NavigationItem[]>([]);
 
-  // Load data when component mounts
   useEffect(() => {
-    const loadSidebarData = async () => {
-      setLoading(true);
+    const fetchCategories = async () => {
       try {
-        const response = await fetch("/api/sidebar");
-        if (response.ok) {
-          const data = await response.json();
-          if (data.items) {
-            setSidebarItems(data.items);
-          }
+        const response = await fetch("/api/categories");
+        const data = await response.json();
+        if (data.success && data.data) {
+          setCategories(data.data);
+          // Build unified navigation list
+          const categoryNavigation: NavigationItem[] = data.data.map(
+            (category: { id: string; name: string; slug: string }) => ({
+              id: `category-${category.id}`,
+              name: category.name,
+              icon: "Tag",
+              path: `/category/${category.slug}`,
+              type: "category" as const,
+              slug: category.slug,
+            })
+          );
+          setAllNavigation([...STATIC_NAVIGATION, ...categoryNavigation]);
         }
       } catch (error) {
-        console.error("Failed to load sidebar:", error);
+        // Silent fail - fallback to static navigation
+        setAllNavigation(STATIC_NAVIGATION);
       } finally {
         setLoading(false);
       }
     };
 
-    loadSidebarData();
+    fetchCategories();
   }, []);
-
-  const handleNavigation = (path: string) => {
-    router.push(path);
-  };
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -94,18 +131,15 @@ function MobileMenuSheetContent() {
     }
   };
 
-  const iconMap: Record<string, any> = {
-    Home,
-    Compass,
-    Sparkles,
-    Heart,
-    Users,
+  // Get navigation items with flat glassmorphism style
+  const getNavItemStyle = (item: NavigationItem) => {
+    return "flex items-center gap-3 px-4 py-3 text-sm font-medium text-foreground bg-transparent backdrop-blur-xl border-b border-border/20 hover:bg-background/40 hover:text-accent-foreground transition-all duration-200";
   };
 
   return (
     <>
-      {/* Mobile Search Bar */}
-      <div className="border-b border-border p-4">
+      {/* Mobile Search Bar - Flat Style */}
+      <div className="border-b border-border/20 p-4 bg-background/95 backdrop-blur-xl">
         <form onSubmit={handleSearchSubmit} className="flex items-center gap-2">
           <div className="relative flex-1 min-w-0">
             <div className="absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none">
@@ -113,16 +147,16 @@ function MobileMenuSheetContent() {
             </div>
             <input
               type="text"
-              placeholder="搜索内容"
+              placeholder="搜索文章"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               maxLength={100}
-              className="h-9 w-full rounded-lg bg-muted pl-9 pr-3 text-sm outline-none border border-transparent focus:ring-2 focus:ring-primary/50 focus:border-primary placeholder:text-muted-foreground/60"
+              className="h-9 w-full px-9 pr-3 text-sm outline-none bg-transparent border-b border-border/20 focus:border-primary/50 placeholder:text-muted-foreground/70 transition-colors"
             />
           </div>
           <button
             type="submit"
-            className="px-2 h-9 rounded-lg bg-primary text-primary-foreground hover:bg-primary/90 active:scale-95 transition-transform flex items-center justify-center"
+            className="px-2 h-9 text-sm font-medium text-foreground bg-transparent hover:text-primary transition-colors flex items-center justify-center cursor-pointer"
             aria-label="搜索"
           >
             <Search className="h-4 w-4" />
@@ -130,64 +164,42 @@ function MobileMenuSheetContent() {
         </form>
       </div>
 
-      {/* Navigation Items */}
+      {/* Blog Navigation - Unified Data Source - Flat Style */}
       <div className="flex h-full flex-col overflow-y-auto">
-        <nav className="flex flex-1 flex-col gap-1 p-2">
-          {loading ? (
-            <div className="flex items-center justify-center py-6 text-sm text-muted-foreground">
-              <div className="flex flex-col items-center gap-2">
-                <div className="w-5 h-5 border-2 border-primary border-t-transparent rounded-full animate-spin"></div>
-                <span>加载中...</span>
-              </div>
-            </div>
-          ) : (
-            sidebarItems.map((item) => {
-              if (item.item_type === "divider") {
-                return (
-                  <div
-                    key={item.id}
-                    className="my-2 h-px w-full bg-border opacity-60"
-                  />
-                );
-              }
-
-              const Icon = item.icon_name ? iconMap[item.icon_name] : null;
-              if (!Icon) return null;
-
-              const isActive = item.path ? pathname === item.path : false;
-
+        <div className="py-2">
+          <div className="text-xs font-medium text-muted-foreground mb-2 px-4">
+            导航
+          </div>
+          <div className="flex flex-col">
+            {allNavigation.map((item) => {
+              const IconComponent = ICON_MAP[item.icon];
               return (
                 <button
                   key={item.id}
                   type="button"
-                  onClick={() => handleNavigation(item.path || "")}
-                  className={`flex h-12 items-center gap-3 rounded-lg px-4 text-sm font-medium transition-all duration-200 ${
-                    isActive
-                      ? "bg-primary/10 text-primary"
-                      : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-                  }`}
+                  onClick={() => router.push(item.path)}
+                  className="flex items-center gap-3 px-4 py-3 text-sm font-medium text-foreground bg-background/95 backdrop-blur-xl hover:bg-background/40 hover:text-primary transition-all duration-200 border-b border-border/10 cursor-pointer"
                 >
-                  <Icon className="h-5 w-5 shrink-0" />
-                  <span className="flex-1 text-left">{item.label}</span>
-                  {isActive && (
-                    <div className="w-1.5 h-1.5 rounded-full bg-primary" />
+                  {IconComponent && (
+                    <IconComponent className="h-4 w-4 text-primary hover:text-primary" />
                   )}
+                  <span className="flex-1 text-left">{item.name}</span>
                 </button>
               );
-            })
-          )}
-        </nav>
+            })}
+          </div>
+        </div>
 
-        {/* Quick Actions */}
-        <div className="border-t border-border p-3">
-          <div className="text-xs font-medium text-muted-foreground mb-2 px-1">
+        {/* Quick Actions - Flat Style */}
+        <div className="border-t border-border/20 py-2 bg-background/95 backdrop-blur-xl">
+          <div className="text-xs font-medium text-muted-foreground mb-2 px-4">
             页面设置
           </div>
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-col">
             <button
               type="button"
               onClick={toggleEnabled}
-              className="flex items-center justify-between gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground active:bg-accent/50"
+              className="flex items-center justify-between gap-3 px-4 py-3 text-sm font-medium text-foreground bg-background/95 backdrop-blur-xl hover:bg-background/40 hover:text-primary transition-all duration-200 border-b border-border/10 cursor-pointer"
             >
               <div className="flex items-center gap-3">
                 <Sparkles className="h-4 w-4 text-primary" />
@@ -195,7 +207,7 @@ function MobileMenuSheetContent() {
               </div>
               <div
                 className={`relative h-5 w-9 rounded-full transition-colors ${
-                  isEnabled ? "bg-primary" : "bg-muted"
+                  isEnabled ? "bg-primary" : "bg-border"
                 }`}
               >
                 <div
@@ -229,7 +241,7 @@ export default function Header() {
         const parsedData = await parseLogoImage(file);
         setImageData(parsedData?.imageData ?? null);
       } catch (err) {
-        console.error("Header: Error loading logo image:", err);
+        // Silent fail
       }
     }
 
@@ -262,7 +274,7 @@ export default function Header() {
   );
 
   return (
-    <header className="fixed left-0 right-0 top-0 z-50 h-16 bg-background/70 backdrop-blur-xl border-b border-border">
+    <header className="fixed left-0 right-0 top-0 z-50 h-16 bg-background/60 backdrop-blur-2xl border-b border-border/20">
       <div className="flex h-full items-center justify-between px-3 md:px-6">
         {/* Left: Mobile Menu Trigger */}
         <div className="flex items-center gap-2 md:gap-4 flex-1 min-w-0 overflow-hidden">
@@ -300,11 +312,9 @@ export default function Header() {
               transition={transitions.smooth}
             >
               <ShinyText
-                text="GenVio"
-                speed={3}
+                text="Apllgen"
+                speed={2}
                 delay={0}
-                color="#6b7280"
-                shineColor="#ffffff"
                 spread={120}
                 direction="left"
                 yoyo={false}
@@ -360,7 +370,7 @@ export default function Header() {
               value={searchQuery}
               onChange={handleSearchChange}
               maxLength={100}
-              className="h-9 w-full rounded-full bg-muted px-10 py-2 text-sm outline-none border-2 border-transparent focus:ring-0 focus:border-primary placeholder:text-muted-foreground/70"
+              className="h-9 w-full rounded-full bg-background/60 backdrop-blur-xl px-10 py-2 text-sm outline-none border-2 border-border/30 focus:ring-0 focus:border-primary/50 placeholder:text-muted-foreground/70"
             />
             <AnimatePresence>
               {searchQuery && (
@@ -379,9 +389,9 @@ export default function Header() {
             </AnimatePresence>
           </motion.form>
 
-          {/* Mobile Center Logo/GenVio - Only on mobile */}
+          {/* Mobile Center Logo/ApllGeo - Only on mobile */}
           <div className="md:hidden flex items-center justify-center gap-2 flex-1 min-w-0">
-            <div className="relative flex h-8 w-8 items-center justify-center overflow-hidden select-none flex-shrink-0">
+            <div className="relative flex h-8 w-8 items-center justify-center overflow-hidden select-none shrink-0">
               {imageData && (
                 <MetallicPaint
                   imageData={imageData}
@@ -396,9 +406,22 @@ export default function Header() {
                 />
               )}
             </div>
-            <div className="text-lg font-bold select-none text-gray-600 whitespace-nowrap">
-              GenVio
-            </div>
+            <motion.div
+              whileHover={{ letterSpacing: "0.05em" }}
+              transition={transitions.smooth}
+              className="whitespace-nowrap"
+            >
+              <ShinyText
+                text="Apllgen"
+                speed={2}
+                delay={0}
+                spread={120}
+                direction="left"
+                yoyo={false}
+                pauseOnHover={false}
+                className="text-lg font-bold select-none"
+              />
+            </motion.div>
           </div>
         </div>
 
@@ -408,7 +431,7 @@ export default function Header() {
           <motion.button
             type="button"
             onClick={toggleTheme}
-            className="flex items-center justify-center w-8 h-8 md:w-9 md:h-9 rounded-lg bg-muted text-muted-foreground hover:bg-accent hover:text-accent-foreground active:scale-95 active:bg-accent/50 transition-transform ml-1 md:ml-2"
+            className="flex items-center justify-center w-8 h-8 md:w-9 md:h-9 rounded-lg bg-background/60 backdrop-blur-xl border border-border/20 text-muted-foreground hover:bg-background/70 hover:text-primary active:scale-95 active:bg-background/60 transition-transform ml-1 md:ml-2"
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.95 }}
             transition={transitions.smooth}
@@ -436,7 +459,7 @@ export default function Header() {
           <motion.button
             type="button"
             onClick={toggleEnabled}
-            className="hidden sm:flex items-center gap-2 rounded-lg px-2 md:px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground active:scale-95 active:bg-accent/50 transition-transform"
+            className="hidden sm:flex items-center gap-2 rounded-lg px-2 md:px-3 py-2 text-sm font-medium text-muted-foreground bg-background/60 backdrop-blur-xl border border-border/20 hover:bg-background/70 hover:text-primary active:scale-95 active:bg-background/60 transition-transform"
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.95 }}
             transition={transitions.smooth}

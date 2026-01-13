@@ -7,8 +7,8 @@ import { AuthProvider } from "@/context/AuthContext";
 import { SplashCursorProvider } from "@/context/SplashCursorContext";
 
 export const metadata: Metadata = {
-  title: "GenVio",
-  description: "GenVio",
+  title: "ApllGeo",
+  description: "ApllGeo",
 };
 
 export default function RootLayout({

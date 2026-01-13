@@ -84,10 +84,9 @@ export function parseLogoImage(file: File) {
             const g = data[idx4 + 1];
             const b = data[idx4 + 2];
             const a = data[idx4 + 3];
-            shapeMask[y * width + x] = !(
-              (r === 255 && g === 255 && b === 255 && a === 255) ||
-              a === 0
-            );
+            // 修改：只将完全透明或纯白色的像素视为背景
+            // 对于SVG图标，我们需要保留所有非透明像素
+            shapeMask[y * width + x] = !(a === 0);
           }
         }
 
@@ -302,9 +301,8 @@ float get_color_channel(float c1, float c2, float stripe_p, vec3 w, float extra_
     return ch;
 }
 float get_img_frame_alpha(vec2 uv, float img_frame_width) {
-    float img_frame_alpha = smoothstep(0., img_frame_width, uv.x) * smoothstep(1., 1. - img_frame_width, uv.x);
-    img_frame_alpha *= smoothstep(0., img_frame_width, uv.y) * smoothstep(1., 1. - img_frame_width, uv.y);
-    return img_frame_alpha;
+    // 移除边框透明度计算，让logo完全透明背景
+    return 1.0;
 }
 void main() {
     vec2 uv = vUv;
@@ -314,6 +312,13 @@ void main() {
     float t = .001 * u_time;
     vec2 img_uv = get_img_uv();
     vec4 img = texture(u_image_texture, img_uv);
+    
+    // 如果当前像素是完全透明背景，直接返回透明
+    if (img.a < 0.1) {
+        fragColor = vec4(0.0, 0.0, 0.0, 0.0);
+        return;
+    }
+    
     vec3 color = vec3(0.);
     float opacity = 1.;
     vec3 color1 = vec3(.98, 0.98, 1.);
@@ -403,22 +408,13 @@ export default function MetallicPaint({
   useEffect(() => {
     function initShader() {
       const canvas = canvasRef.current;
-      console.log("MetallicPaint: Initializing WebGL...", {
-        canvas,
-        imageData,
-      });
       const glContext = canvas?.getContext("webgl2", {
         antialias: true,
         alpha: true,
       });
       if (!canvas || !glContext) {
-        console.error("MetallicPaint: Failed to get WebGL2 context", {
-          canvas,
-          glContext,
-        });
         return;
       }
-      console.log("MetallicPaint: WebGL2 context obtained successfully");
 
       function createShader(
         gl: WebGL2RenderingContext,
@@ -434,10 +430,6 @@ export default function MetallicPaint({
         gl.compileShader(shader);
 
         if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-          console.error(
-            "An error occurred compiling the shaders: " +
-              gl.getShaderInfoLog(shader),
-          );
           gl.deleteShader(shader);
           return null;
         }
@@ -465,10 +457,6 @@ export default function MetallicPaint({
       glContext.linkProgram(program);
 
       if (!glContext.getProgramParameter(program, glContext.LINK_STATUS)) {
-        console.error(
-          "Unable to initialize the shader program: " +
-            glContext.getProgramInfoLog(program),
-        );
         return null;
       }
 
@@ -519,7 +507,6 @@ export default function MetallicPaint({
       );
 
       setGl(glContext);
-      console.log("MetallicPaint: WebGL initialized successfully");
     }
 
     initShader();
@@ -598,17 +585,8 @@ export default function MetallicPaint({
 
   useEffect(() => {
     if (!gl || !uniforms) {
-      console.log(
-        "MetallicPaint: Texture upload skipped - gl or uniforms not ready",
-      );
       return;
     }
-
-    console.log("MetallicPaint: Uploading texture...", {
-      imageDataWidth: imageData?.width,
-      imageDataHeight: imageData?.height,
-      dataSize: imageData?.data?.length,
-    });
 
     const existingTexture = gl.getParameter(gl.TEXTURE_BINDING_2D);
     if (existingTexture) {
@@ -640,9 +618,8 @@ export default function MetallicPaint({
       );
 
       gl.uniform1i(uniforms.u_image_texture, 0);
-      console.log("MetallicPaint: Texture uploaded successfully");
     } catch (e) {
-      console.error("MetallicPaint: Error uploading texture:", e);
+      // 纹理上传失败，静默处理
     }
 
     return () => {
